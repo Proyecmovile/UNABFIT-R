@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -41,6 +42,7 @@ fun LoginScreen(navController: NavController) {
 
                 var email by remember { mutableStateOf("") }
                 var password by remember { mutableStateOf("") }
+
 
                 OutlinedTextField(
                     value = email,

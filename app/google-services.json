@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "493090651379",
+    "project_id": "unabfit-r",
+    "storage_bucket": "unabfit-r.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493090651379:android:478968003b70a62b0a4b86",
+        "android_client_info": {
+          "package_name": "com.yorguisanchez.unabfit_r"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6WXg1Wp0lNCeE9ORD5Ze8_a_aVwACKCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
