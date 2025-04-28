@@ -32,6 +32,9 @@ class MainActivity : ComponentActivity() {
                     composable(route = "Home") {
                         HomeScreen(myNavController)
                     }
+                    composable("Reservation") {
+                        ReservationsScreen(myNavController)
+                    }
                 }
             }
         }
