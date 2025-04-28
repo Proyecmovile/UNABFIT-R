@@ -15,18 +15,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
+import com.yorguisanchez.unabfit_r.ui.theme.validateEmailRegister
+import com.yorguisanchez.unabfit_r.ui.theme.validatepassword
 
 @Composable
 fun RegisterScreen(navController: NavController) {
+    val auth = FirebaseAuth.getInstance()
 
-    Scaffold { innerpadding ->
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerpadding)
+                .padding(innerPadding)
                 .padding(horizontal = 32.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -40,21 +49,13 @@ fun RegisterScreen(navController: NavController) {
                     modifier = Modifier.size(250.dp)
                 )
 
-                var fullName by remember { mutableStateOf("") }
-                var email by remember { mutableStateOf("") }
-                var password by remember { mutableStateOf("") }
-                var confirmPassword by remember { mutableStateOf("") }
-
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
                     label = { Text("Nombre Completo") },
                     singleLine = true,
                     leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Nombre"
-                        )
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Nombre")
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -65,10 +66,7 @@ fun RegisterScreen(navController: NavController) {
                     label = { Text("Correo Electrónico") },
                     singleLine = true,
                     leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Correo"
-                        )
+                        Icon(imageVector = Icons.Default.Email, contentDescription = "Correo")
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -79,10 +77,7 @@ fun RegisterScreen(navController: NavController) {
                     label = { Text("Contraseña") },
                     singleLine = true,
                     leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Contraseña"
-                        )
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = "Contraseña")
                     },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -95,10 +90,7 @@ fun RegisterScreen(navController: NavController) {
                     label = { Text("Confirmar contraseña") },
                     singleLine = true,
                     leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Confirmar Contraseña"
-                        )
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = "Confirmar Contraseña")
                     },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -106,7 +98,67 @@ fun RegisterScreen(navController: NavController) {
                 )
 
                 Button(
-                    onClick = { },
+                    onClick = {
+                        val (isEmailValid, emailError) = validateEmailRegister(email)
+                        val (isPasswordValid, passwordError) = validatepassword(password)
+
+                        if (fullName.isEmpty()) {
+                            Toast.makeText(
+                                navController.context,
+                                "El nombre completo es requerido",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+
+                        if (!isEmailValid) {
+                            Toast.makeText(
+                                navController.context,
+                                emailError,
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+
+                        if (!isPasswordValid) {
+                            Toast.makeText(
+                                navController.context,
+                                passwordError,
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+
+                        if (password != confirmPassword) {
+                            Toast.makeText(
+                                navController.context,
+                                "Las contraseñas no coinciden",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+
+                        // Registro en Firebase
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Toast.makeText(
+                                        navController.context,
+                                        "Registro exitoso",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("Login") {
+                                        popUpTo("Register") { inclusive = true }
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        navController.context,
+                                        "Error en el registro: ${task.exception?.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -119,3 +171,4 @@ fun RegisterScreen(navController: NavController) {
         }
     }
 }
+
