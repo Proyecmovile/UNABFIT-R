@@ -1,5 +1,6 @@
 package com.yorguisanchez.unabfit_r
 
+// ---------- IMPORTS ----------
 import android.annotation.SuppressLint
 import android.app.TimePickerDialog
 import android.widget.TimePicker
@@ -24,23 +25,29 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
 import java.util.*
 
+// ---------- MAIN COMPOSABLE ----------
 @SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationsScreen(navController: NavController) {
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
+    // --- UI color base ---
     val calendarColor = Color(0xFFBDBDBD)
 
+    // --- State ---
     var selectedDate by remember { mutableStateOf("") }
     var selectedTime by remember { mutableStateOf("") }
 
+    // --- Helpers ---
     val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()              // autenticación
 
     Scaffold(
         topBar = {
@@ -65,13 +72,13 @@ fun ReservationsScreen(navController: NavController) {
                         overflow = TextOverflow.Ellipsis
                     )
                     IconButton(
-                        onClick = { },
+                        onClick = { /* Menú */ },
                         modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(Icons.Default.Menu, contentDescription = "Menú")
                     }
                     IconButton(
-                        onClick = { },
+                        onClick = { /* Perfil */ },
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
                         Icon(Icons.Default.Person, contentDescription = "Perfil")
@@ -92,15 +99,13 @@ fun ReservationsScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = {
-                        navController.navigate("Home")
-                    }) {
+                    IconButton(onClick = { navController.navigate("Home") }) {
                         Icon(Icons.Default.Home, contentDescription = "Inicio")
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { /* Notificaciones */ }) {
                         Icon(Icons.Default.Notifications, contentDescription = "Calendario")
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { navController.navigate("Reservations") }) {
                         Icon(Icons.Default.Favorite, contentDescription = "Favoritos")
                     }
                 }
@@ -115,6 +120,7 @@ fun ReservationsScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            // ---------- Date / Time Picker ----------
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 shadowElevation = 4.dp,
@@ -126,7 +132,7 @@ fun ReservationsScreen(navController: NavController) {
                         selectedDate = String.format("%02d/%02d/%04d", day, month + 1, year)
 
                         val calendar = Calendar.getInstance()
-                        val timePickerDialog = TimePickerDialog(
+                        TimePickerDialog(
                             context,
                             { _: TimePicker, hourOfDay: Int, minute: Int ->
                                 selectedTime = String.format("%02d:%02d", hourOfDay, minute)
@@ -134,14 +140,14 @@ fun ReservationsScreen(navController: NavController) {
                             calendar.get(Calendar.HOUR_OF_DAY),
                             calendar.get(Calendar.MINUTE),
                             true
-                        )
-                        timePickerDialog.show()
+                        ).show()
                     }
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // ---------- Resumen selección ----------
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = calendarColor),
@@ -159,7 +165,6 @@ fun ReservationsScreen(navController: NavController) {
                         text = if (selectedDate.isNotEmpty()) "Fecha: $selectedDate" else "Fecha no seleccionada",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = Color.Black,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -167,7 +172,6 @@ fun ReservationsScreen(navController: NavController) {
                         text = if (selectedTime.isNotEmpty()) "Hora: $selectedTime" else "Hora no seleccionada",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = Color.Black,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -175,9 +179,15 @@ fun ReservationsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // ---------- Botón Reservar ----------
             Button(
                 onClick = {
-                    val db = Firebase.firestore
+                    val userEmail = auth.currentUser?.email       // correo del usuario logueado
+                    if (userEmail == null) {
+                        Toast.makeText(context, "Inicia sesión para reservar", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
                     val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                     val today = sdf.format(Date())
 
@@ -185,12 +195,12 @@ fun ReservationsScreen(navController: NavController) {
                         Toast.makeText(context, "Selecciona una fecha y hora", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-
                     if (sdf.parse(selectedDate)?.before(sdf.parse(today)) == true) {
                         Toast.makeText(context, "No se pueden hacer reservas en fechas anteriores", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
+                    val db = Firebase.firestore
                     db.collection("reservaciones")
                         .whereEqualTo("fecha", selectedDate)
                         .get()
@@ -198,9 +208,8 @@ fun ReservationsScreen(navController: NavController) {
                             if (documents.size() >= 10) {
                                 Toast.makeText(context, "Ya hay 10 reservas para este día", Toast.LENGTH_SHORT).show()
                             } else {
-                                val usuarioId = "U00171197"
                                 val nuevaReserva = hashMapOf(
-                                    "usuarioId" to usuarioId,
+                                    "usuarioEmail" to userEmail,
                                     "fecha" to selectedDate,
                                     "hora" to selectedTime,
                                     "timestamp" to FieldValue.serverTimestamp()
@@ -231,14 +240,14 @@ fun ReservationsScreen(navController: NavController) {
                 Text(
                     text = "Reservar",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
     }
 }
 
+// ---------- DATE PICKER ----------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePicker(onDateSelected: (year: Int, month: Int, day: Int) -> Unit) {

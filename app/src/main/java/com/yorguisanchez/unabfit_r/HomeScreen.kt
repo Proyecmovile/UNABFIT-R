@@ -102,7 +102,9 @@ fun HomeScreen(navController: NavController) {
                             contentDescription = "Calendario"
                         )
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {
+                        navController.navigate("Reservations")
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = "Favoritos"
