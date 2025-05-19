@@ -1,8 +1,8 @@
 package com.yorguisanchez.unabfit_r
 
-// ---------- IMPORTS ----------
 import android.annotation.SuppressLint
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,57 +30,62 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import android.graphics.Bitmap
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 
-// ---------- DATA CLASS ----------
 data class Reserva(
-    val id: String = "",      // doc ID (opcional, p/QR o eliminar)
+    val id: String = "",
     val fecha: String = "",
     val hora: String = ""
 )
 
-// ---------- MAIN COMPOSABLE ----------
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyReservationsScreen(navController: NavController) {
 
-    // --- UI color base ---
     val calendarColor = Color(0xFFBDBDBD)
 
-    // --- State ---
     var reservas by remember { mutableStateOf(listOf<Reserva>()) }
     var isLoading by remember { mutableStateOf(true) }
+    var selectedReserva by remember { mutableStateOf<Reserva?>(null) }
 
-    // --- Firebase Auth ---
-    val userEmail = FirebaseAuth.getInstance().currentUser?.email
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+    val userEmail = auth.currentUser?.email
 
-    // --- Cargar reservas del usuario al abrir pantalla ---
     LaunchedEffect(userEmail) {
-        if (userEmail != null) {
-            val db = FirebaseFirestore.getInstance()
-            try {
-                val snapshot = db.collection("reservaciones")
-                    .whereEqualTo("usuarioEmail", userEmail)
-                    .orderBy("timestamp", Query.Direction.DESCENDING)
-                    .get()
-                    .await()
+        if (userEmail == null) {
+            isLoading = false
+            return@LaunchedEffect
+        }
 
-                reservas = snapshot.documents.mapNotNull { doc ->
-                    val fecha = doc.getString("fecha") ?: return@mapNotNull null
-                    val hora  = doc.getString("hora")  ?: return@mapNotNull null
-                    Reserva(doc.id, fecha, hora)
-                }
-            } catch (e: Exception) {
-                reservas = emptyList()
-            } finally {
-                isLoading = false
+        try {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collectionGroup("reservaciones")
+                .whereEqualTo("usuarioEmail", userEmail)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .await()
+
+            reservas = snapshot.documents.mapNotNull { doc ->
+                Reserva(
+                    id = doc.id,
+                    fecha = doc.getString("fecha") ?: return@mapNotNull null,
+                    hora = doc.getString("hora") ?: return@mapNotNull null
+                )
             }
-        } else {
+        } catch (e: Exception) {
+            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            reservas = emptyList()
+        } finally {
             isLoading = false
         }
     }
 
-    // ---------- UI ----------
     Scaffold(
         topBar = {
             Surface(
@@ -95,25 +101,23 @@ fun MyReservationsScreen(navController: NavController) {
                 ) {
                     Text(
                         text = "UNABFIT-R",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         fontSize = 28.sp,
                         color = Color(0xFF424242),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        modifier = Modifier
+                            .padding(top = 8.dp)
                     )
                     IconButton(
                         onClick = { /* Menú */ },
                         modifier = Modifier.align(Alignment.CenterStart)
-                    ) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menú")
-                    }
+                    ) { Icon(Icons.Default.Menu, contentDescription = "Menú") }
                     IconButton(
                         onClick = { /* Perfil */ },
                         modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Icon(Icons.Default.Person, contentDescription = "Perfil")
-                    }
+                    ) { Icon(Icons.Default.AccountCircle, contentDescription = "Perfil") }
                 }
             }
         },
@@ -133,10 +137,10 @@ fun MyReservationsScreen(navController: NavController) {
                     IconButton(onClick = { navController.navigate("Home") }) {
                         Icon(Icons.Default.Home, contentDescription = "Inicio")
                     }
-                    IconButton(onClick = { /* Notificaciones */ }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Calendario")
+                    IconButton(onClick = { navController.navigate("Reservation") }) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notificaciones")
                     }
-                    IconButton(onClick = { /* Favoritos */ }) {
+                    IconButton(onClick = {  }) {
                         Icon(Icons.Default.Favorite, contentDescription = "Favoritos")
                     }
                 }
@@ -151,7 +155,6 @@ fun MyReservationsScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ---------- Encabezado ----------
             Text(
                 text = "Mis Reservas",
                 fontWeight = FontWeight.Bold,
@@ -159,7 +162,6 @@ fun MyReservationsScreen(navController: NavController) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // ---------- Contenido ----------
             when {
                 isLoading -> {
                     CircularProgressIndicator()
@@ -196,10 +198,7 @@ fun MyReservationsScreen(navController: NavController) {
                                         .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // ---------- Datos reserva (izquierda) ----------
-                                    Column(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = "Fecha: ${reserva.fecha}",
                                             fontWeight = FontWeight.Bold,
@@ -211,18 +210,36 @@ fun MyReservationsScreen(navController: NavController) {
                                             fontSize = 16.sp
                                         )
                                     }
-
-                                    // ---------- Botón Ver QR (derecha) ----------
-                                    Button(
-                                        onClick = {
-
-                                        }
-                                    ) {
+                                    Button(onClick = {
+                                        selectedReserva = reserva
+                                    }) {
                                         Text("Ver QR")
                                     }
                                 }
                             }
                         }
+                    }
+                    if (selectedReserva != null) {
+                        AlertDialog(
+                            onDismissRequest = { selectedReserva = null },
+                            confirmButton = {
+                                TextButton(onClick = { selectedReserva = null }) {
+                                    Text("Cerrar")
+                                }
+                            },
+                            title = {
+                                Text("Código QR de la Reserva")
+                            },
+                            text = {
+                                val qrData = "Reserva - Fecha: ${selectedReserva!!.fecha}, Hora: ${selectedReserva!!.hora}"
+                                val qrBitmap = generateQrCodeBitmap(qrData)
+                                Image(
+                                    bitmap = qrBitmap.asImageBitmap(),
+                                    contentDescription = "QR Code",
+                                    modifier = Modifier.size(250.dp)
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -230,3 +247,16 @@ fun MyReservationsScreen(navController: NavController) {
     }
 }
 
+fun generateQrCodeBitmap(data: String): Bitmap {
+    val writer = QRCodeWriter()
+    val bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, 512, 512)
+    val width = bitMatrix.width
+    val height = bitMatrix.height
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+    for (x in 0 until width) {
+        for (y in 0 until height) {
+            bitmap.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
+    }
+    return bitmap
+}

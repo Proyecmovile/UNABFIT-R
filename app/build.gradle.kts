@@ -65,4 +65,10 @@ dependencies {
 
     //FIREBASE
     implementation(libs.firebase.bom)
+
+    //GenerarQR
+    implementation(libs.core)
+    implementation(libs.ui.graphics)
+    implementation(libs.coil.compose)
+
 }

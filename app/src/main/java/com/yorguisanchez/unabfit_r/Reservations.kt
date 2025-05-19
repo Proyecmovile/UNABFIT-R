@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -38,16 +39,11 @@ import java.util.*
 @Composable
 fun ReservationsScreen(navController: NavController) {
 
-    // --- UI color base ---
     val calendarColor = Color(0xFFBDBDBD)
-
-    // --- State ---
     var selectedDate by remember { mutableStateOf("") }
     var selectedTime by remember { mutableStateOf("") }
-
-    // --- Helpers ---
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()              // autenticación
+    val auth = FirebaseAuth.getInstance()
 
     Scaffold(
         topBar = {
@@ -64,24 +60,26 @@ fun ReservationsScreen(navController: NavController) {
                 ) {
                     Text(
                         text = "UNABFIT-R",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         fontSize = 28.sp,
                         color = Color(0xFF424242),
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        modifier = Modifier
+                            .padding(top = 8.dp)
                     )
                     IconButton(
-                        onClick = { /* Menú */ },
+                        onClick = {  },
                         modifier = Modifier.align(Alignment.CenterStart)
                     ) {
                         Icon(Icons.Default.Menu, contentDescription = "Menú")
                     }
                     IconButton(
-                        onClick = { /* Perfil */ },
+                        onClick = {  },
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = "Perfil")
+                        Icon(Icons.Default.AccountCircle, contentDescription = "Perfil")
                     }
                 }
             }
