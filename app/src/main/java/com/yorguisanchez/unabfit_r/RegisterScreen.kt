@@ -137,8 +137,6 @@ fun RegisterScreen(navController: NavController) {
                             ).show()
                             return@Button
                         }
-
-                        // Registro en Firebase
                         auth.createUserWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {

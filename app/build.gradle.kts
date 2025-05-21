@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.vision.common)
+    implementation(libs.play.services.mlkit.barcode.scanning)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,5 +72,9 @@ dependencies {
     implementation(libs.core)
     implementation(libs.ui.graphics)
     implementation(libs.coil.compose)
+
+    //scanerqr
+    implementation (libs.zxing.android.embedded)
+
 
 }

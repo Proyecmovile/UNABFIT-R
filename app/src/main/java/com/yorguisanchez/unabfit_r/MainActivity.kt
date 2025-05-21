@@ -7,36 +7,48 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.yorguisanchez.unabfit_r.ui.theme.UNABFITRTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             UNABFITRTheme {
+                val navController = rememberNavController()
 
-                val myNavController = rememberNavController()
-                val myStartDestination: String = "Login"
+                val user = FirebaseAuth.getInstance().currentUser
+                val userEmail = user?.email
+
+                val startDestination = when {
+                    userEmail == "admin@unab.edu.co" -> "Admin"
+                    userEmail != null -> "Home"
+                    else -> "Login"
+                }
 
                 NavHost(
-                    navController = myNavController,
-                    startDestination = myStartDestination
+                    navController = navController,
+                    startDestination = startDestination
                 ) {
                     composable(route = "Login") {
-                        LoginScreen(myNavController)
+                        LoginScreen(navController)
                     }
                     composable(route = "Register") {
-                        RegisterScreen(myNavController)
+                        RegisterScreen(navController)
                     }
                     composable(route = "Home") {
-                        HomeScreen(myNavController)
+                        HomeScreen(navController)
                     }
-                    composable("Reservation") {
-                        ReservationsScreen(myNavController)
+                    composable(route = "Admin") {
+                        AdminScreen(navController)
+                    }
+                    composable(route = "Reservation") {
+                        ReservationsScreen(navController)
                     }
                     composable(route = "Reservations") {
-                        MyReservationsScreen(myNavController)
+                        MyReservationsScreen(navController)
                     }
                 }
             }

@@ -1,6 +1,5 @@
 package com.yorguisanchez.unabfit_r
 
-// ---------- IMPORTS ----------
 import android.annotation.SuppressLint
 import android.app.TimePickerDialog
 import android.widget.TimePicker
@@ -33,7 +32,6 @@ import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
 import java.util.*
 
-// ---------- MAIN COMPOSABLE ----------
 @SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +116,6 @@ fun ReservationsScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // ---------- Date / Time Picker ----------
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 shadowElevation = 4.dp,
@@ -145,7 +142,6 @@ fun ReservationsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ---------- Resumen selección ----------
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = calendarColor),
@@ -177,7 +173,6 @@ fun ReservationsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ---------- Botón Reservar ----------
             Button(
                 onClick = {
                     val userEmail = auth.currentUser?.email       // correo del usuario logueado
@@ -245,7 +240,6 @@ fun ReservationsScreen(navController: NavController) {
     }
 }
 
-// ---------- DATE PICKER ----------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePicker(onDateSelected: (year: Int, month: Int, day: Int) -> Unit) {

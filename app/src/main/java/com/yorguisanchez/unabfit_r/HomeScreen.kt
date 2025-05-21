@@ -53,8 +53,6 @@ fun HomeScreen(navController: NavController) {
                         color = Color(0xFF424242),
                         modifier = Modifier.padding(top = 8.dp)
                     )
-
-                    // Botón del menú (izquierda)
                     IconButton(
                         onClick = { /* TODO */ },
                         modifier = Modifier.align(Alignment.CenterStart)
@@ -64,8 +62,6 @@ fun HomeScreen(navController: NavController) {
                             contentDescription = "Menú"
                         )
                     }
-
-                    // Botón del perfil (derecha)
                     IconButton(
                         onClick = { showLogoutDialog = true },
                         modifier = Modifier.align(Alignment.CenterEnd)
